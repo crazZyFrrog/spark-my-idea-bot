@@ -137,15 +137,6 @@ const Index = () => {
           </button>
         </div>
 
-        {/* Empty state */}
-        {!result && !isLoading && (
-          <div className="bg-card rounded-2xl p-8 md:p-12 shadow-card border border-border text-center space-y-3">
-            <Lightbulb className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-            <p className="text-muted-foreground text-base">Здесь появятся ваши идеи</p>
-            <p className="text-muted-foreground/60 text-sm">Введите тему и нажмите «Сгенерировать»</p>
-          </div>
-        )}
-
         {/* Result */}
         {result && (
           <div className="bg-card rounded-2xl p-6 md:p-8 shadow-card border border-border animate-in fade-in slide-in-from-bottom-4 duration-500">
