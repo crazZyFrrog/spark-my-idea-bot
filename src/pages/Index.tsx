@@ -1,15 +1,18 @@
-import { useState, useCallback } from "react";
-import { Lightbulb, List, Sparkles, Loader2 } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Lightbulb, List, Sparkles, Loader2, Trash2, Clock } from "lucide-react";
 import { streamIdeas } from "@/lib/stream-ideas";
 import { useToast } from "@/hooks/use-toast";
 
 type Mode = "list" | "single";
+
+type HistoryItem = { topic: string; mode: Mode; result: string };
 
 const Index = () => {
   const [topic, setTopic] = useState("");
   const [mode, setMode] = useState<Mode>("list");
   const [result, setResult] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async () => {
@@ -21,11 +24,21 @@ const Index = () => {
     setResult("");
     setIsLoading(true);
 
+    let accumulated = "";
+
     await streamIdeas({
       topic: topic.trim(),
       mode,
-      onDelta: (chunk) => setResult((prev) => prev + chunk),
-      onDone: () => setIsLoading(false),
+      onDelta: (chunk) => {
+        accumulated += chunk;
+        setResult((prev) => prev + chunk);
+      },
+      onDone: () => {
+        setIsLoading(false);
+        if (accumulated) {
+          setHistory((prev) => [{ topic: topic.trim(), mode, result: accumulated }, ...prev].slice(0, 3));
+        }
+      },
       onError: (error) => {
         setIsLoading(false);
         toast({ title: "Ошибка", description: error, variant: "destructive" });
@@ -136,6 +149,40 @@ const Index = () => {
             <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed whitespace-pre-wrap text-[15px]">
               {result}
             </div>
+          </div>
+        )}
+
+        {/* History */}
+        {history.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-medium">История генераций</span>
+              </div>
+              <button
+                onClick={() => setHistory([])}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Очистить
+              </button>
+            </div>
+            {history.map((item, i) => (
+              <div
+                key={i}
+                className="bg-card rounded-2xl p-5 shadow-card border border-border space-y-2 animate-in fade-in duration-300"
+              >
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{item.topic}</span>
+                  <span>·</span>
+                  <span>{item.mode === "list" ? "Список" : "Идея + план"}</span>
+                </div>
+                <div className="text-foreground/80 text-sm leading-relaxed whitespace-pre-wrap line-clamp-4">
+                  {item.result}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
