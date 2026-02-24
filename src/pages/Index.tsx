@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from "react";
-import { Lightbulb, List, Sparkles, Loader2, Trash2, Clock } from "lucide-react";
+import { Lightbulb, List, Sparkles, Loader2, Trash2, Clock, Shuffle } from "lucide-react";
 import { streamIdeas } from "@/lib/stream-ideas";
 import { useToast } from "@/hooks/use-toast";
 
-type Mode = "list" | "single";
+type Mode = "list" | "single" | "random";
 
 type HistoryItem = { topic: string; mode: Mode; result: string };
 
@@ -16,7 +16,7 @@ const Index = () => {
   const { toast } = useToast();
 
   const handleGenerate = useCallback(async () => {
-    if (!topic.trim()) {
+    if (mode !== "random" && !topic.trim()) {
       toast({ title: "Введите тему", description: "Поле темы не может быть пустым", variant: "destructive" });
       return;
     }
@@ -25,9 +25,10 @@ const Index = () => {
     setIsLoading(true);
 
     let accumulated = "";
+    const currentTopic = mode === "random" ? "Случайная идея" : topic.trim();
 
     await streamIdeas({
-      topic: topic.trim(),
+      ...(mode !== "random" ? { topic: topic.trim() } : {}),
       mode,
       onDelta: (chunk) => {
         accumulated += chunk;
@@ -36,7 +37,7 @@ const Index = () => {
       onDone: () => {
         setIsLoading(false);
         if (accumulated) {
-          setHistory((prev) => [{ topic: topic.trim(), mode, result: accumulated }, ...prev].slice(0, 3));
+          setHistory((prev) => [{ topic: currentTopic, mode, result: accumulated }, ...prev].slice(0, 3));
         }
       },
       onError: (error) => {
@@ -65,23 +66,10 @@ const Index = () => {
 
         {/* Input Card */}
         <div className="bg-card rounded-2xl p-6 md:p-8 shadow-card space-y-6 border border-border">
-          {/* Topic input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Тема</label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !isLoading && handleGenerate()}
-              placeholder="Например: мобильное приложение для студентов"
-              className="w-full px-4 py-3 rounded-xl bg-background border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow text-base"
-            />
-          </div>
-
           {/* Mode toggle */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Режим</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setMode("list")}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 transition-all text-left ${
@@ -114,13 +102,44 @@ const Index = () => {
                   <div className="text-xs text-muted-foreground">Идея и 3 шага</div>
                 </div>
               </button>
+              <button
+                onClick={() => setMode("random")}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 transition-all text-left ${
+                  mode === "random"
+                    ? "border-primary bg-primary/5 shadow-soft"
+                    : "border-border bg-background hover:border-muted-foreground/30"
+                }`}
+              >
+                <Shuffle className={`w-5 h-5 shrink-0 ${mode === "random" ? "text-primary" : "text-muted-foreground"}`} />
+                <div>
+                  <div className={`text-sm font-medium ${mode === "random" ? "text-primary" : "text-foreground"}`}>
+                    Рандомная идея
+                  </div>
+                  <div className="text-xs text-muted-foreground">Случайная тема</div>
+                </div>
+              </button>
             </div>
           </div>
+
+          {/* Topic input */}
+          {mode !== "random" && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Тема</label>
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !isLoading && handleGenerate()}
+                placeholder="Например: мобильное приложение для студентов"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow text-base"
+              />
+            </div>
+          )}
 
           {/* Generate button */}
           <button
             onClick={handleGenerate}
-            disabled={isLoading || !topic.trim()}
+            disabled={isLoading || (mode !== "random" && !topic.trim())}
             className="w-full py-3.5 rounded-xl gradient-warm text-primary-foreground font-semibold text-base transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-soft"
           >
             {isLoading ? (
@@ -152,7 +171,7 @@ const Index = () => {
             <div className="flex items-center gap-2 mb-4">
               <Lightbulb className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-display text-foreground">
-                {mode === "list" ? "Ваши идеи" : "Ваша идея"}
+                {mode === "list" ? "Ваши идеи" : mode === "random" ? "Случайная идея" : "Ваша идея"}
               </h2>
             </div>
             <div className="prose prose-stone max-w-none text-foreground/90 leading-relaxed whitespace-pre-wrap text-[15px]">
@@ -185,7 +204,7 @@ const Index = () => {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">{item.topic}</span>
                   <span>·</span>
-                  <span>{item.mode === "list" ? "Список" : "Идея + план"}</span>
+                  <span>{item.mode === "list" ? "Список" : item.mode === "random" ? "Рандом" : "Идея + план"}</span>
                 </div>
                 <div className="text-foreground/80 text-sm leading-relaxed whitespace-pre-wrap line-clamp-4">
                   {item.result}

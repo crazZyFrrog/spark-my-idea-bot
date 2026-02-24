@@ -9,8 +9,8 @@ export async function streamIdeas({
   onDone,
   onError,
 }: {
-  topic: string;
-  mode: "list" | "single";
+  topic?: string;
+  mode: "list" | "single" | "random";
   onDelta: (text: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
@@ -22,7 +22,7 @@ export async function streamIdeas({
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ topic, mode }),
+      body: JSON.stringify({ ...(topic ? { topic } : {}), mode }),
     });
 
     if (!resp.ok) {
