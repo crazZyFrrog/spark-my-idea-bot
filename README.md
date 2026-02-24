@@ -62,12 +62,47 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Automatic Deployment (Recommended)
 
-## Can I connect a custom domain to my Lovable project?
+This project is configured to deploy automatically on **Vercel** when you push changes to the main branch.
 
-Yes, you can!
+1. Connect your GitHub repository to [Vercel](https://vercel.com)
+2. Set the required environment variables in Vercel Project Settings:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `LOVABLE_API_KEY` (for Supabase functions)
+3. Push your changes to the main branch - Vercel will automatically build and deploy
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Manual Deployment
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```sh
+# Build the project
+npm run build
+
+# Preview the build locally
+npm run preview
+
+# Deploy to Vercel (if Vercel CLI is installed)
+vercel deploy --prod
+```
+
+## Environment Variables
+
+Create a `.env` file (or set in Vercel) with:
+
+```
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+LOVABLE_API_KEY=your_lovable_api_key
+```
+
+See `.env.example` for reference.
+
+## Features
+
+- **AI-powered idea generator** with multiple modes
+- **Category filters** for random idea generation
+- **Real-time streaming** responses
+- **Modern, responsive UI** with Tailwind CSS
+- **TypeScript** for type safety
+- **Supabase integration** for serverless functions
