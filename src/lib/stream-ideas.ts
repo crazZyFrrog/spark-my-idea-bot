@@ -5,12 +5,14 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-ide
 export async function streamIdeas({
   topic,
   mode,
+  category,
   onDelta,
   onDone,
   onError,
 }: {
   topic?: string;
   mode: "list" | "single" | "random";
+  category?: string;
   onDelta: (text: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
@@ -22,7 +24,11 @@ export async function streamIdeas({
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ ...(topic ? { topic } : {}), mode }),
+      body: JSON.stringify({ 
+        ...(topic ? { topic } : {}), 
+        mode,
+        ...(category ? { category } : {})
+      }),
     });
 
     if (!resp.ok) {

@@ -11,13 +11,27 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
 
   try {
-    const { topic, mode } = await req.json();
+    const { topic, mode, category } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const getCategoryConstraint = (cat: string | undefined) => {
+      if (!cat) return "";
+      const constraints: Record<string, string> = {
+        tech: "Идея должна быть из области технологий и IT.",
+        business: "Идея должна быть связана с бизнесом и предпринимательством.",
+        creative: "Идея должна быть из творческой сферы (дизайн, искусство, музыка, литература).",
+        science: "Идея должна быть из области науки и исследований.",
+        lifestyle: "Идея должна быть связана с повседневной жизнью и образом жизни.",
+      };
+      return constraints[cat] || "";
+    };
+
+    const categoryConstraint = getCategoryConstraint(category);
+
     const systemPrompt =
       mode === "random"
-        ? `Ты — креативный генератор случайных идей. Придумай одну неожиданную, оригинальную идею из совершенно случайной области (технологии, бизнес, творчество, наука, повседневная жизнь — что угодно). Идея должна быть конкретной, практичной и вдохновляющей. Каждый раз выбирай новую область. Отвечай на русском.
+        ? `Ты — креативный генератор случайных идей. Придумай одну неожиданную, оригинальную идею из совершенно случайной области (технологии, бизнес, творчество, наука, повседневная жизнь — что угодно). ${categoryConstraint} Идея должна быть конкретной, практичной и вдохновляющей. Каждый раз выбирай новую область. Отвечай на русском.
 Формат:
 **Область:** [случайная область]
 **Идея:** [описание в 2-3 предложениях]
